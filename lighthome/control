@@ -1,0 +1,9 @@
+Package: local.dumbiphone.lighthome
+Name: LightHome
+Version: 1.1.1
+Architecture: iphoneos-arm
+Description: A Light Phone style home screen: clock, date and a short text list of tools.
+Maintainer: dumb iPhone
+Author: dumb iPhone
+Section: Tweaks
+Depends: mobilesubstrate, firmware (>= 8.2)

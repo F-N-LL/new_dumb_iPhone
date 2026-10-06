@@ -1,0 +1,6 @@
+keys/
+build/
+backup/
+tools/
+lighthome/.theos/
+lighthome/packages/
