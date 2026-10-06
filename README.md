@@ -32,6 +32,39 @@ No working Home button? Press **volume-down twice quickly**.
 Edit the lists at the top of [`lighthome/Tweak.x`](lighthome/Tweak.x) and run `./deploy.sh` to update.
 `./deploy.sh --remove` puts the normal home screen back.
 
+## WhatsApp (optional, needs a computer at home)
+
+WhatsApp no longer runs on iOS 9, and WhatsApp Web refuses iOS 9 Safari. `whatsapp.sh` runs a small
+bridge on your computer instead ([`wabridge/`](wabridge), Go, built on
+[whatsmeow](https://github.com/tulir/whatsmeow)). It links to your WhatsApp as a companion device,
+like WhatsApp Web, and serves a plain black chat page that LightHome opens from a **WhatsApp** row.
+
+```
+./whatsapp.sh            # build, link (scan the QR from your main phone), install on the phone
+./whatsapp.sh --remove   # stop it, remove it from the phone, delete its data
+```
+
+- Chats, unread counts, ticks, search (people, groups, messages), new chat by number,
+  and **photos from the camera roll** (take them with Camera, then Photo in a chat).
+- Works on your **home Wi-Fi while the computer is on** (it runs as a user service and starts with it).
+- Needs WhatsApp on another phone (it links as a companion device). Text and photos out;
+  incoming media shows as `[photo]`, `[voice message]`... No notifications.
+- **Unofficial client**: against WhatsApp's terms. Ban risk is low for personal use, not zero.
+
+Why photos come from the camera roll and not Safari's upload button: on jailbroken iOS 9 the
+iCloud Drive extension behind Safari's picker crashes (`invalid sandbox or container: error 45`),
+which takes the whole picker down.
+
+**Security of the bridge**
+- Session, messages, keys and token live in `~/.local/share/dumb-iphone-whatsapp` (mode 700), never in the repo.
+- HTTPS with a private CA made on your computer and installed on the phone; a random token
+  (from the LightHome row, then an HttpOnly cookie); CSRF check on every send; requests from
+  non-private addresses are refused; the firewall port is opened for your home subnet only.
+- To read photos it uses its **own SSH key**, which the phone only accepts for
+  [`phone/dumbiphone-gallery`](wabridge/phone/dumbiphone-gallery): list camera-roll photos or read one.
+  No shell, no other files, no port forwarding.
+- The log has paths and status codes only: no message text, numbers or the token.
+
 ## Dumb profile (no jailbreak)
 
 ```

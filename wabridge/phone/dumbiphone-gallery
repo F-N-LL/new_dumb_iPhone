@@ -1,0 +1,21 @@
+#!/bin/sh
+# Installed on the phone as the forced command for the WhatsApp bridge's SSH key.
+# That key can only list recent camera-roll photos or read one of them; nothing else.
+set -f
+set -- $SSH_ORIGINAL_COMMAND
+cd /var/mobile/Media/DCIM 2>/dev/null || exit 0
+case "$1" in
+  list)
+    set +f
+    ls -t [0-9][0-9][0-9]APPLE/IMG_[0-9]*.[JjPp][PpNn][Gg] 2>/dev/null
+    exit 0
+    ;;
+  get)
+    case "$2" in
+      *..*|*/*/*) exit 1 ;;
+      [0-9][0-9][0-9]APPLE/IMG_[0-9]*.[JjPp][PpNn][Gg]) [ -f "$2" ] && exec cat "$2" ;;
+    esac
+    exit 1
+    ;;
+esac
+exit 1

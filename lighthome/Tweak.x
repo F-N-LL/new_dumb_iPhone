@@ -20,16 +20,25 @@
 @end
 
 // Each row: title, then an app bundle id, a URL, or "tools"/"back" to switch lists.
+// Rows that hold secrets (like the WhatsApp bridge link) live on the phone, not in this file:
+// /var/mobile/Library/Preferences/local.dumbiphone.lighthome.plist  { rows = ( ("WhatsApp", "https://..."), ); }
 static NSArray *HomeRows(void) {
-    return @[
+    NSMutableArray *rows = [@[
         @[@"Phone",      @"com.apple.mobilephone"],
         @[@"Messages",   @"com.apple.MobileSMS"],
+    ] mutableCopy];
+    NSDictionary *prefs = [NSDictionary dictionaryWithContentsOfFile:@"/var/mobile/Library/Preferences/local.dumbiphone.lighthome.plist"];
+    for (id row in prefs[@"rows"]) {
+        if ([row isKindOfClass:[NSArray class]] && [row count] == 2) [rows addObject:row];
+    }
+    [rows addObjectsFromArray:@[
         @[@"Camera",     @"com.apple.camera"],
         @[@"Directions", @"com.apple.Maps"],
         @[@"Music",      @"com.apple.Music"],
         @[@"Podcasts",   @"com.apple.podcasts"],
         @[@"Tools",      @"tools"],
-    ];
+    ]];
+    return rows;
 }
 
 static NSArray *ToolRows(void) {

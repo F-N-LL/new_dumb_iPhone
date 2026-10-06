@@ -3,6 +3,7 @@
 
   build_profile.py profile  OUT            -> dumb.mobileconfig (restrictions + layout + web clip)
   build_profile.py certs    OUT            -> certs.mobileconfig (root certs only, separate so it survives --undo)
+  build_profile.py ca       OUT PEM        -> trust a private CA (the WhatsApp bridge's)
   build_profile.py cloud    OUT KEYBAG     -> cloud configuration that marks the phone as supervised
 """
 import plistlib
@@ -74,6 +75,14 @@ def certs_profile():
                    PayloadOrganization=ORG, PayloadRemovalDisallowed=False, PayloadContent=root_certs())
 
 
+def ca_profile(pem):
+    """A private CA (the WhatsApp bridge's), so iOS trusts the bridge's HTTPS page."""
+    return payload("Configuration", "wabridge-ca", PayloadDisplayName="WhatsApp bridge certificate",
+                   PayloadOrganization=ORG, PayloadRemovalDisallowed=False,
+                   PayloadContent=[payload("com.apple.security.root", "wabridge-ca-root",
+                                           PayloadContent=ssl.PEM_cert_to_DER_cert(Path(pem).read_text()))])
+
+
 def profile():
     return payload(
         "Configuration", "profile",
@@ -126,6 +135,11 @@ def cloud(keybag):
 
 if __name__ == "__main__":
     kind, out = sys.argv[1], Path(sys.argv[2])
-    data = {"profile": profile, "certs": certs_profile}[kind]() if kind != "cloud" else cloud(Path(sys.argv[3]))
+    if kind == "cloud":
+        data = cloud(Path(sys.argv[3]))
+    elif kind == "ca":
+        data = ca_profile(sys.argv[3])
+    else:
+        data = {"profile": profile, "certs": certs_profile}[kind]()
     out.write_bytes(plistlib.dumps(data))
     print(f"wrote {out}")
