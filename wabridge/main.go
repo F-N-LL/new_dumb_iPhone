@@ -50,6 +50,8 @@ var (
 	dataDir = flag.String("data", "data", "where the WhatsApp session, messages, certificates and token live")
 	link    = flag.Bool("link", false, "link this bridge to your WhatsApp with a QR code, then exit")
 	addr    = flag.String("addr", ":8443", "HTTPS listen address")
+	extraIP = flag.String("ip", "", "this machine's address on the home network (added to the certificate)")
+	logout  = flag.Bool("logout", false, "unlink this bridge from WhatsApp, then exit")
 
 	cli   *whatsmeow.Client
 	db    *sql.DB
@@ -62,6 +64,7 @@ var (
 func main() {
 	flag.Parse()
 	ctx := context.Background()
+	androidDNS()
 	must(os.MkdirAll(*dataDir, 0o700))
 	dsn := func(f string) string {
 		return "file:" + filepath.Join(*dataDir, f) + "?_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)"
@@ -81,6 +84,14 @@ func main() {
 	must(err)
 	db.Exec(`ALTER TABLE msg ADD COLUMN st INT DEFAULT 0`) // 1 sent, 2 delivered, 3 read (own messages)
 
+	if *logout {
+		if cli.Store.ID != nil {
+			must(cli.Connect())
+			must(cli.Logout(ctx))
+		}
+		fmt.Println("Unlinked.")
+		return
+	}
 	token = loadOrCreateToken()
 	cert := loadOrCreateCert()
 	if *link {
@@ -809,6 +820,44 @@ func loadOrCreateCert() tls.Certificate {
 	return tls.Certificate{Certificate: [][]byte{der, ca.Raw}, PrivateKey: key}
 }
 
+func boolInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+// androidDNS: Android has no /etc/resolv.conf, so Go's resolver would ask 127.0.0.1 and fail.
+// Use Termux's resolv.conf if present, else public resolvers.
+func androidDNS() {
+	if _, err := os.Stat("/etc/resolv.conf"); err == nil {
+		return
+	}
+	servers := []string{"1.1.1.1:53", "8.8.8.8:53"}
+	if b, err := os.ReadFile(os.ExpandEnv("$PREFIX/etc/resolv.conf")); err == nil {
+		var own []string
+		for _, l := range strings.Split(string(b), "\n") {
+			if f := strings.Fields(l); len(f) == 2 && f[0] == "nameserver" {
+				own = append(own, net.JoinHostPort(f[1], "53"))
+			}
+		}
+		if len(own) > 0 {
+			servers = own
+		}
+	}
+	net.DefaultResolver = &net.Resolver{PreferGo: true, Dial: func(ctx context.Context, network, _ string) (net.Conn, error) {
+		var d net.Dialer
+		var err error
+		for _, s := range servers {
+			var c net.Conn
+			if c, err = d.DialContext(ctx, network, s); err == nil {
+				return c, nil
+			}
+		}
+		return nil, err
+	}}
+}
+
 func serial() *big.Int {
 	n, _ := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 120))
 	return n
@@ -816,12 +865,15 @@ func serial() *big.Int {
 
 func lanIPs() []string {
 	var ips []string
+	if *extraIP != "" {
+		ips = append(ips, *extraIP)
+	}
 	addrs, _ := net.InterfaceAddrs()
 	for _, a := range addrs {
-		if n, ok := a.(*net.IPNet); ok && n.IP.To4() != nil && !n.IP.IsLoopback() && n.IP.IsPrivate() {
+		if n, ok := a.(*net.IPNet); ok && n.IP.To4() != nil && !n.IP.IsLoopback() && n.IP.IsPrivate() && n.IP.String() != *extraIP {
 			ips = append(ips, n.IP.String())
 		}
 	}
-	sort.Strings(ips)
+	sort.Strings(ips[min(len(ips), boolInt(*extraIP != "")):])
 	return append(ips, "127.0.0.1")
 }

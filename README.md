@@ -40,9 +40,18 @@ bridge on your computer instead ([`wabridge/`](wabridge), Go, built on
 like WhatsApp Web, and serves a plain black chat page that LightHome opens from a **WhatsApp** row.
 
 ```
-./whatsapp.sh            # build, link (scan the QR from your main phone), install on the phone
-./whatsapp.sh --remove   # stop it, remove it from the phone, delete its data
+./whatsapp.sh                 # on this computer: build, link (scan the QR from your main phone), set up the iPhone
+./whatsapp.sh --remote <ip>   # same, but on a spare Android phone running Termux (always on, ~1 W)
+./whatsapp.sh --remove        # stop it wherever it runs, unlink it, clean the iPhone
 ```
+
+**Always on, for free: a spare Android phone.** Any Android 7+ phone left at home on Wi-Fi and the
+charger can host the bridge (no SIM, no WhatsApp needed on it). Install F-Droid, then Termux and
+Termux:Boot from it, open Termux:Boot once, and in Termux run
+`pkg install -y openssh termux-tools && passwd && sshd`. On MIUI and similar, set Termux's battery
+saver to "No restrictions" and allow autostart. `--remote` then logs in once with that password,
+switches the phone to key-only SSH, builds the bridge for it, starts it at boot, and retires the
+copy on this computer. *(Remote mode is new and not yet tested on a real phone.)*
 
 - Chats, unread counts, ticks, search (people, groups, messages), new chat by number,
   and **photos from the camera roll** (take them with Camera, then Photo in a chat).

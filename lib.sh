@@ -1,6 +1,7 @@
+# shellcheck shell=bash
 # Shared by deploy.sh and whatsapp.sh. Source it; then call phone_ssh to get ph/phr/push.
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-cd "$ROOT"
+cd "$ROOT" || exit 1
 export PATH="$HOME/.local/bin:$PATH"
 say() { printf '\n\033[1m%s\033[0m\n' "$*"; }
 die() { printf '\n\033[31m%s\033[0m\n' "$*" >&2; exit 1; }

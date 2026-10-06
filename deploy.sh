@@ -10,7 +10,9 @@ source "$(dirname "$0")/lib.sh"
 THEOS_COMMIT=dd5c14bb9d91311e221d51b5bfb8c9e5948156db
 SDKS_COMMIT=0222fd5413cf4b9af096f37b4621afa2688572f7
 TOOLCHAIN_URL=https://github.com/L1ghtmann/llvm-project/releases/download/test-210562a
+# shellcheck disable=SC2034  # read indirectly via ${!sha_var}
 TOOLCHAIN_SHA_x86_64=a72a7a577e2fbe2838b6b5e9c72034fa7d114af96f0e1d4b016f18730ce4056e
+# shellcheck disable=SC2034
 TOOLCHAIN_SHA_aarch64=9051e9d531de5e511f0fab40d925d625bc6efe7ed9dce821d179c09de9bc690b
 DEBS=(  # file  sha256  source
   "mobilesubstrate_0.9.6301_iphoneos-arm.deb 8dc91a066f088632409fecf65613831b8d6802e3b799f2dc87563c3ea2ed06ca http://apt.saurik.com/debs"
