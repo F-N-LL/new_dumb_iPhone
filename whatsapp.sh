@@ -179,6 +179,7 @@ ExecStart=$DATA/wabridge -data $DATA -addr :$PORT -ip $host_ip
 Restart=always
 RestartSec=10
 NoNewPrivileges=yes
+UMask=0077
 PrivateTmp=yes
 
 [Install]
